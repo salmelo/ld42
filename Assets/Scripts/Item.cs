@@ -22,6 +22,10 @@ public class Item : MonoBehaviour, IPointerClickHandler
             currentStack = startStack;
             SetStack();
         }
+        else
+        {
+            maxStack = -1;
+        }
     }
 
     private void SetStack()
