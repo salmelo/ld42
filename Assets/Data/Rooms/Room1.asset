@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0013440242d22d45bd0c76bf0e6821e, type: 3}
+  m_Name: Room1
+  m_EditorClassIdentifier: 
+  drops:
+  - item: {fileID: 114321734112669308, guid: 1bec8717e02715a48b295ad185b7d182, type: 2}
+    weight: 5
+    stack:
+      min: 0
+      max: 0
+  - item: {fileID: 114161089804945982, guid: d9002c0641bb49d47a43da52d0542e55, type: 2}
+    weight: 10
+    stack:
+      min: 4
+      max: 7
+  - item: {fileID: 114161089804945982, guid: d9002c0641bb49d47a43da52d0542e55, type: 2}
+    weight: 15
+    stack:
+      min: 8
+      max: 11
+  - item: {fileID: 114161089804945982, guid: d9002c0641bb49d47a43da52d0542e55, type: 2}
+    weight: 10
+    stack:
+      min: 12
+      max: 20
+  - item: {fileID: 114205011349936992, guid: 1ef29c5ae10f0c84f9a83403ec29682c, type: 2}
+    weight: 10
+    stack:
+      min: 0
+      max: 0

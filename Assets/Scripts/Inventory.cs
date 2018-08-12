@@ -107,39 +107,38 @@ public class Inventory : MonoBehaviour, IPointerClickHandler
 
     public void InsertItem(Item item, Vector2Int position)
     {
+        if (item == null) throw new System.ArgumentException("Item cannot be null.", nameof(item));
         contents.Add(new ItemContent(item, position));
+        item.transform.parent = transform;
+
+        GameManager.current.CheckNextRoom();
     }
 
     public void InsertItem(Item item, int x, int y)
     {
-        if (item == null) throw new System.ArgumentException("Item cannot be null.", nameof(item));
-        contents.Add(new ItemContent(item, x, y));
+        InsertItem(item, new Vector2Int(x, y));
     }
-
+    
     public void RemoveItem(Item item)
-    {
-        contents.Remove(contents.First(i => i.item == item));
-    }
-
-    public void TryRemoveItem(Item item)
     {
         var i = contents.FirstOrDefault(it => it.item == item);
         if (i.item != null)
         {
             contents.Remove(i);
+            item.transform.parent = GameManager.current.background;
         }
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
         if (eventData.button != PointerEventData.InputButton.Left 
-            || !GameManager.current.selectedItem) return;
+            || !GameManager.current.SelectedItem) return;
 
         var position = WorldToGridPosition(eventData.pointerCurrentRaycast.worldPosition);
 
-        if (CanFit(GameManager.current.selectedItem, position))
+        if (CanFit(GameManager.current.SelectedItem, position))
         {
-            var i = GameManager.current.selectedItem; 
+            var i = GameManager.current.SelectedItem; 
             GameManager.current.DropItem(GridToWorldPosition(position));
             InsertItem(i, position);
         }

@@ -8,15 +8,21 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager current;
 
-    public Item selectedItem;
-    public Vector3 oldPosition;
-
+    public Transform background;
+    public Transform spawnTopRight, spawnBottomLeft;
+    public Range itemsPerRoom = new Range(8, 16);
     public List<ItemCombination> combinations;
+    public List<Room> rooms;
 
     public Vector3 PointerPosition => Camera.main.ScreenToWorldPoint(Input.mousePosition).WithZ(0);
 
+    public Item SelectedItem { get; set; }
+
     private PointerEventData pointerData;
     private List<RaycastResult> raycastResults;
+    private int currentRoom;
+    private Vector3 oldPosition;
+    private int checkNextRoom;
 
     private void Awake()
     {
@@ -26,12 +32,21 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         pointerData = new PointerEventData(EventSystem.current);
-        raycastResults = new List<RaycastResult>(5) { new RaycastResult(), new RaycastResult(), new RaycastResult() };
+        raycastResults = new List<RaycastResult>(5) { };
+        NextRoom();
     }
 
     void Update()
     {
-        if (selectedItem)
+        if (checkNextRoom > 0)
+        {
+            checkNextRoom--;
+            if (checkNextRoom <= 0)
+            {
+                DoCheckNextRoom();
+            }
+        }
+        if (SelectedItem)
         {
             if (Input.GetMouseButtonUp(1))
             {
@@ -39,7 +54,7 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                selectedItem.transform.position = PointerPosition;
+                SelectedItem.transform.position = PointerPosition;
 
                 pointerData.position = Input.mousePosition;
                 EventSystem.current.RaycastAll(pointerData, raycastResults);
@@ -51,7 +66,7 @@ public class GameManager : MonoBehaviour
                         var item = res.gameObject.GetComponent<Item>();
                         if (item)
                         {
-                            var combo = GetCombination(item, selectedItem);
+                            var combo = GetCombination(item, SelectedItem);
                             if (combo != null)
                             {
                                 if (CanCombineSelected(item, combo))
@@ -60,7 +75,7 @@ public class GameManager : MonoBehaviour
                                 }
                             }
 
-                            if (item.CanStack(selectedItem))
+                            if (item.CanStack(SelectedItem))
                             {
                                 break;
                             }
@@ -70,7 +85,7 @@ public class GameManager : MonoBehaviour
                         }
                         if (res.gameObject == Inventory.current.gameObject)
                         {
-                            if (!Inventory.current.CanFit(selectedItem, Inventory.current.WorldToGridPosition(PointerPosition)))
+                            if (!Inventory.current.CanFit(SelectedItem, Inventory.current.WorldToGridPosition(PointerPosition)))
                             {
                                 canPlace = false;
                                 break;
@@ -80,11 +95,11 @@ public class GameManager : MonoBehaviour
                 }
                 if (canPlace)
                 {
-                    selectedItem.ClearInvalid();
+                    SelectedItem.ClearInvalid();
                 }
                 else
                 {
-                    selectedItem.ShowInvalid();
+                    SelectedItem.ShowInvalid();
                 }
             }
         }
@@ -105,14 +120,14 @@ public class GameManager : MonoBehaviour
 
     public void SelectItem(Item item)
     {
-        if (selectedItem)
+        if (SelectedItem)
         {
-            var combo = GetCombination(item, selectedItem);
+            var combo = GetCombination(item, SelectedItem);
             if (combo != null && CanCombineSelected(item, combo))
             {
                 var pos = Inventory.current.GetPosition(item);
-                Inventory.current.TryRemoveItem(item);
-                Inventory.current.TryRemoveItem(selectedItem);
+                Inventory.current.RemoveItem(item);
+                Inventory.current.RemoveItem(SelectedItem);
 
                 var newItem = Instantiate(combo.result);
                 if (pos.HasValue)
@@ -126,42 +141,46 @@ public class GameManager : MonoBehaviour
                 }
 
                 Destroy(item.gameObject);
-                selectedItem.Deselected();
-                Destroy(selectedItem.gameObject);
-                selectedItem = null;
+                SelectedItem.Deselected();
+                Destroy(SelectedItem.gameObject);
+                SelectedItem = null;
+
+                CheckNextRoom();
             }
-            else if (item.CanStack(selectedItem))
+            else if (item.CanStack(SelectedItem))
             {
-                item.AddStack(selectedItem);
-                selectedItem.Deselected();
-                Inventory.current.TryRemoveItem(selectedItem);
-                Destroy(selectedItem.gameObject);
+                item.AddStack(SelectedItem);
+                SelectedItem.Deselected();
+                Inventory.current.RemoveItem(SelectedItem);
+                Destroy(SelectedItem.gameObject);
+
+                CheckNextRoom();
             }
             return;
         }
 
-        selectedItem = item;
+        SelectedItem = item;
         oldPosition = item.transform.position;
         item.Selected();
     }
 
     public void DeselectItem()
     {
-        if (selectedItem)
+        if (SelectedItem)
         {
-            selectedItem.transform.position = oldPosition;
-            selectedItem.Deselected();
-            selectedItem = null;
+            SelectedItem.transform.position = oldPosition;
+            SelectedItem.Deselected();
+            SelectedItem = null;
         }
     }
 
     public void DropItem(Vector3? position = null)
     {
-        if (selectedItem)
+        if (SelectedItem)
         {
-            if (Inventory.current.ContainsItem(selectedItem))
+            if (Inventory.current.ContainsItem(SelectedItem))
             {
-                Inventory.current.RemoveItem(selectedItem);
+                Inventory.current.RemoveItem(SelectedItem);
             }
             oldPosition = position ?? PointerPosition;
             DeselectItem();
@@ -171,5 +190,37 @@ public class GameManager : MonoBehaviour
     public ItemCombination GetCombination(Item a, Item b)
     {
         return combinations.FirstOrDefault(c => c.CanCombine(a, b));
+    }
+
+    private void NextRoom()
+    {
+        if (currentRoom >= rooms.Count)
+        {
+            //todo end game
+            Debug.Log("Gama Ovar");
+            return;
+        }
+        var room = rooms[currentRoom];
+        currentRoom++;
+
+        for (int toSpawn = itemsPerRoom.Random(); toSpawn > 0; toSpawn--)
+        {
+            var pos = new Vector3(Random.Range(spawnBottomLeft.position.x, spawnTopRight.position.x)
+                                , Random.Range(spawnBottomLeft.position.y, spawnTopRight.position.y));
+            room.SpawnItem(pos, background);
+        }
+    }
+
+    public void CheckNextRoom()
+    {
+        checkNextRoom += 3;
+    }
+
+    private void DoCheckNextRoom()
+    {
+        if (!background.OfType<Transform>().Select(t => t.GetComponent<Item>()).Any())
+        {
+            NextRoom();
+        }
     }
 }
