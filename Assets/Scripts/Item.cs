@@ -5,8 +5,9 @@ using UnityEngine.EventSystems;
 
 public class Item : MonoBehaviour, IPointerClickHandler
 {
-
+    public new string name;
     public Vector2Int size = new Vector2Int(1, 1);
+    public string stackWith;
     public GameObject graphic;
 
     private GameObject ghost;

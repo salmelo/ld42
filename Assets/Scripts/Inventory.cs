@@ -6,13 +6,19 @@ using UnityEngine.EventSystems;
 
 public class Inventory : MonoBehaviour, IPointerClickHandler
 {
+    public static Inventory current;
+
     public Vector2Int gridSize = new Vector2Int(6, 6);
     public float cellSize = 1;
     public LineRenderer linePrefab;
 
     private List<ItemContent> contents;
 
-    // Use this for initialization
+    void Awake()
+    {
+        current = this;
+    }
+
     void Start()
     {
         DrawGrid();
@@ -69,18 +75,28 @@ public class Inventory : MonoBehaviour, IPointerClickHandler
         return contents.FirstOrDefault(i => i.IsInCell(position)).item;
     }
 
+    public Vector2Int? GetPosition(Item item)
+    {
+        foreach (var i in contents)
+        {
+            if (i.item == item) return i.position;
+        }
+        return null;
+    }
+
     public bool ContainsItem(Item item)
     {
         return contents.Any(i => i.item == item);
     }
 
-    public bool CanFit(Item item, Vector2Int position)
+    public bool CanFit(Item item, Vector2Int position, Item ignore = null)
     {
         for (int x = 0; x < item.size.x; x++)
         {
             for (int y = 0; y < item.size.y; y++)
             {
-                if (GetItem(position + new Vector2Int(x, y)))
+                Item present = GetItem(position + new Vector2Int(x, y));
+                if (present != null && present != ignore)
                 {
                     return false;
                 }
@@ -103,6 +119,15 @@ public class Inventory : MonoBehaviour, IPointerClickHandler
     public void RemoveItem(Item item)
     {
         contents.Remove(contents.First(i => i.item == item));
+    }
+
+    public void TryRemoveItem(Item item)
+    {
+        var i = contents.FirstOrDefault(it => it.item == item);
+        if (i.item != null)
+        {
+            contents.Remove(i);
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
