@@ -52,17 +52,21 @@ public class GameManager : MonoBehaviour
                         if (item)
                         {
                             var combo = GetCombination(item, selectedItem);
-                            if (combo == null)
+                            if (combo != null)
                             {
-                                canPlace = false;
+                                if (CanCombineSelected(item, combo))
+                                {
+                                    break;
+                                }
+                            }
+
+                            if (item.CanStack(selectedItem))
+                            {
                                 break;
                             }
 
-                            if (CanCombineSelected(item, combo))
-                            {
-                                canPlace = true;
-                                break;
-                            }
+                            canPlace = false;
+                            break;
                         }
                         if (res.gameObject == Inventory.current.gameObject)
                         {
@@ -125,6 +129,13 @@ public class GameManager : MonoBehaviour
                 selectedItem.Deselected();
                 Destroy(selectedItem.gameObject);
                 selectedItem = null;
+            }
+            else if (item.CanStack(selectedItem))
+            {
+                item.AddStack(selectedItem);
+                selectedItem.Deselected();
+                Inventory.current.TryRemoveItem(selectedItem);
+                Destroy(selectedItem.gameObject);
             }
             return;
         }

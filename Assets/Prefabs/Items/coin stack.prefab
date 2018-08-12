@@ -720,7 +720,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   name: coin stack
   size: {x: 2, y: 1}
-  stackWith: 
+  stackOf: coin
+  startStack: 2
+  maxStack: 20
   graphic: {fileID: 1910269980704164}
 --- !u!210 &210587805681045452
 SortingGroup:

@@ -7,10 +7,31 @@ public class Item : MonoBehaviour, IPointerClickHandler
 {
     public new string name;
     public Vector2Int size = new Vector2Int(1, 1);
-    public string stackWith;
+    public string stackOf;
+    public int startStack;
+    public int maxStack;
     public GameObject graphic;
 
     private GameObject ghost;
+    private int currentStack;
+
+    private void Start()
+    {
+        if (stackOf != "")
+        {
+            currentStack = startStack;
+            SetStack();
+        }
+    }
+
+    private void SetStack()
+    {
+        var count = 0;
+        foreach (Transform t in graphic.transform)
+        {
+            t.GetComponent<SpriteRenderer>().enabled = count++ < currentStack;
+        }
+    }
 
     public void OnPointerClick(PointerEventData eventData)
     {
@@ -69,5 +90,17 @@ public class Item : MonoBehaviour, IPointerClickHandler
         {
             r.color = color;
         }
+    }
+
+    public bool CanStack(Item other)
+    {
+        return (other.name == stackOf && currentStack < maxStack)
+            || (other.stackOf == stackOf && currentStack + other.currentStack <= maxStack);
+    }
+
+    public void AddStack(Item other)
+    {
+        currentStack += Mathf.Max(1, other.currentStack);
+        SetStack();
     }
 }
